@@ -25,6 +25,7 @@ dependencies:
   - ipython=8.22.2=pyh707e725_0
   - jedi=0.19.1=pyhd8ed1ab_0
   - jinja2=3.1.3=pyhd8ed1ab_0
+  - joblib=1.3.2=pyhd8ed1ab_0
   - jupyter_client=8.6.1=pyhd8ed1ab_0
   - jupyter_core=5.7.2=py312h81bd7bf_0
   - lcms2=2.16=ha0e7c42_0
@@ -78,10 +79,13 @@ dependencies:
   - pyzmq=25.1.2=py312h1edf716_0
   - readline=8.2=h92ec313_1
   - requests=2.31.0=pyhd8ed1ab_0
+  - scikit-learn=1.4.1.post1=py312hd4306f4_0
+  - scipy=1.13.0=py312h9d7df2b_0
   - setuptools=69.2.0=pyhd8ed1ab_0
   - six=1.16.0=pyh6c4a22f_0
   - stack_data=0.6.2=pyhd8ed1ab_0
   - sympy=1.12=pyh04b8f61_3
+  - threadpoolctl=3.4.0=pyhc1e730c_0
   - tk=8.6.13=h5083fa2_1
   - torchaudio=2.2.2=py312_cpu
   - torchvision=0.17.2=py312_cpu
@@ -110,7 +114,6 @@ dependencies:
       - pyparsing==3.1.2
       - python-dateutil==2.9.0.post0
       - pytz==2024.1
-      - scipy==1.13.0
       - soundfile==0.12.1
       - tzdata==2024.1
       - vitaldb==1.4.7
