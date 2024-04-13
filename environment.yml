@@ -6,11 +6,13 @@ channels:
 dependencies:
   - appnope=0.1.4=pyhd8ed1ab_0
   - asttokens=2.4.1=pyhd8ed1ab_0
+  - attrs=23.2.0=pyh71513ae_0
   - brotli-python=1.1.0=py312h9f69965_1
   - bzip2=1.0.8=h93a5062_5
   - ca-certificates=2024.2.2=hf0a4a13_0
   - certifi=2024.2.2=pyhd8ed1ab_0
   - charset-normalizer=3.3.2=pyhd8ed1ab_0
+  - colorama=0.4.6=pyhd8ed1ab_0
   - comm=0.2.2=pyhd8ed1ab_0
   - debugpy=1.8.1=py312h20a0b95_0
   - decorator=5.1.1=pyhd8ed1ab_0
@@ -21,11 +23,14 @@ dependencies:
   - idna=3.6=pyhd8ed1ab_0
   - importlib-metadata=7.1.0=pyha770c72_0
   - importlib_metadata=7.1.0=hd8ed1ab_0
+  - importlib_resources=6.4.0=pyhd8ed1ab_0
   - ipykernel=6.29.3=pyh3cd1d5f_0
   - ipython=8.22.2=pyh707e725_0
   - jedi=0.19.1=pyhd8ed1ab_0
   - jinja2=3.1.3=pyhd8ed1ab_0
   - joblib=1.3.2=pyhd8ed1ab_0
+  - jsonschema=4.21.1=pyhd8ed1ab_0
+  - jsonschema-specifications=2023.12.1=pyhd8ed1ab_0
   - jupyter_client=8.6.1=pyhd8ed1ab_0
   - jupyter_core=5.7.2=py312h81bd7bf_0
   - lcms2=2.16=ha0e7c42_0
@@ -52,6 +57,8 @@ dependencies:
   - markupsafe=2.1.5=py312he37b823_0
   - matplotlib-inline=0.1.6=pyhd8ed1ab_0
   - mpmath=1.3.0=pyhd8ed1ab_0
+  - nbformat=5.10.4=pyhd8ed1ab_0
+  - nbstripout=0.7.1=pyhd8ed1ab_0
   - ncurses=6.4.20240210=h078ce10_0
   - nest-asyncio=1.6.0=pyhd8ed1ab_0
   - networkx=3.3=pyhd8ed1ab_0
@@ -64,6 +71,7 @@ dependencies:
   - pickleshare=0.7.5=py_1003
   - pillow=10.3.0=py312h8a801b1_0
   - pip=24.0=pyhd8ed1ab_0
+  - pkgutil-resolve-name=1.3.10=pyhd8ed1ab_1
   - platformdirs=4.2.0=pyhd8ed1ab_0
   - prompt-toolkit=3.0.42=pyha770c72_0
   - psutil=5.9.8=py312he37b823_0
@@ -73,12 +81,15 @@ dependencies:
   - pygments=2.17.2=pyhd8ed1ab_0
   - pysocks=1.7.1=pyha2e5f31_6
   - python=3.12.2=hdf0ec26_0_cpython
+  - python-fastjsonschema=2.19.1=pyhd8ed1ab_0
   - python_abi=3.12=4_cp312
   - pytorch=2.2.2=py3.12_0
   - pyyaml=6.0.1=py312h02f2b3b_1
   - pyzmq=25.1.2=py312h1edf716_0
   - readline=8.2=h92ec313_1
+  - referencing=0.34.0=pyhd8ed1ab_0
   - requests=2.31.0=pyhd8ed1ab_0
+  - rpds-py=0.18.0=py312h77200ec_0
   - scikit-learn=1.4.1.post1=py312hd4306f4_0
   - scipy=1.13.0=py312h9d7df2b_0
   - setuptools=69.2.0=pyhd8ed1ab_0
@@ -90,6 +101,7 @@ dependencies:
   - torchaudio=2.2.2=py312_cpu
   - torchvision=0.17.2=py312_cpu
   - tornado=6.4=py312he37b823_0
+  - tqdm=4.66.2=pyhd8ed1ab_0
   - traitlets=5.14.2=pyhd8ed1ab_0
   - typing_extensions=4.11.0=pyha770c72_0
   - urllib3=2.2.1=pyhd8ed1ab_0
