@@ -7,20 +7,25 @@ Team members, alphabetically by first name:
 - Maciej Wieczorek (maciejw2@illinois.edu)
 - Shaun Phillips (shaunap2@illinois.edu)
 
+## Notebooks
+
+The Project Draft submission can be found in the [DL4H_Team_24_Project_Draft.ipnyb](https://github.com/abarrie2/cs598-dlh-project/blob/main/DL4H_Team_24_Project_Draft.ipynb) notebook.
+The development version can be found in the [DL4H_Team_24.ipnyb](https://github.com/abarrie2/cs598-dlh-project/blob/main/DL4H_Team_24.ipynb) notebook.
+
 ## How to run
 
 The code can be run locally, or in Google Colab. Complete instructions are contained inside of the notebook.
 
-### Quickstart
+### Project Draft Quickstart
 
 The fastest way to run a demo version of the code is in Google Colab.
 
-1. Open the [DL4H_Team_24.ipnyb](https://github.com/abarrie2/cs598-dlh-project/blob/main/DL4H_Team_24.ipynb) notebook.
+1. Open the [DL4H_Team_24_Project_Draft.ipnyb](https://github.com/abarrie2/cs598-dlh-project/blob/main/DL4H_Team_24_Project_Draft.ipynb) notebook.
 2. Click on "Open in Colab" in the top left.
 3. Set the runtime type to "T4 GPU". The code will also run in the default "CPU" instance, but training will take ~10x longer. To do this, in the top right click on the down arrow (Additional connection options) next to "Reconnect", select "Change runtime type", select "T4 GPU" and hit "Save".
 4. In the Runtime menu, click on "Run all".
 
-In the default demo mode, the notebook should take approximately 5 minutes to run, including 6 training epochs.
+In the default demo mode, the notebook should take approximately 5 minutes to run on a T4 GPU instance, including 6 training epochs.
 
 ## VitalDB Resources
 
