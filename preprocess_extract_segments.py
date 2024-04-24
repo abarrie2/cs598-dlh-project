@@ -296,22 +296,12 @@ if PRELOADING_CASES:
 # three one-minute samples of each waveform were obtained from the middle of the segment
 # both occur in extract_segments
 #VITAL_EXTRACTED_SEGMENTS
-def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
+def extract_segments(cases_of_interest_idx, debug=False):
     # Sampling rate for ABP and ECG, Hz. These rates should be the same. Default = 500
     ABP_ECG_SRATE_HZ = 500
 
     # Sampling rate for EEG. Default = 128
     EEG_SRATE_HZ = 128
-
-    # Length of feature segment, seconds.
-    FEATURE_LENGTH_SEC = 60
-    # Look ahead to predict hypotension, seconds.
-    MIDDLE_LENGTH_SEC  = 60 * min_before_event
-    # Length of label segment, seconds.
-    LABEL_LENGTH_SEC   = 60
-
-    # Length to move down the ABP track for starting a new analysis segment, seconds.
-    NEW_SEGMENT_OFFSET_SEC = 10
 
     # Final dataset for training and testing the model.
     # inputs with shape of (segments, timepoints)
@@ -323,11 +313,18 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
     
     count_cases = len(cases_of_interest_idx)
 
+    positiveSegmentsMap = {}
+    negativeSegmentsMap = {}
+    iohEventsMap = {}
+    cleanEventsMap = {}
+
     for case_count, caseid in tqdm(enumerate(cases_of_interest_idx), total=count_cases):
         if debug:
             print(f'Loading case: {caseid:04d}, ({case_count + 1} of {count_cases})')
         
         if areCaseSegmentsCached(caseid):
+            if debug:
+                print(f'Skipping case: {caseid:04d}, already cached')
             # skip records we've already cached
             continue
 
@@ -335,7 +332,9 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
         (abp, ecg, eeg) = get_track_data(caseid)
 
         track_length_seconds = int(len(abp) / ABP_ECG_SRATE_HZ)
-        
+        if debug:
+            print(f"Processing case {caseid} with length {track_length_seconds}s")
+
         iohEvents = []
         cleanEvents = []
         i = 0
@@ -353,7 +352,7 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
             segFound = False
             
             # look forward one minute
-            abpSeg = abp[i * ABP_ECG_SRATE_HZ:(i + 60)* ABP_ECG_SRATE_HZ]
+            abpSeg = abp[i * ABP_ECG_SRATE_HZ:(i + 60) * ABP_ECG_SRATE_HZ]
             
             # roll forward until we hit a one minute window where mean ABP >= 65 so we know leads are connected and it's tracking
             if not started:
@@ -469,6 +468,8 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
         # THIRD PASS
         # in the third pass, we will use the collections of ioh event windows to generate our actual extracted segments based on our prediction window (positive labels)
         for i in range(0, len(iohEvents)):
+            if debug:
+                print(f"Checking event {iohEvents[i]}")
             # we want to review current event boundaries, as well as previous event boundaries if available
             event = iohEvents[i]
             previousEvent = None
@@ -476,14 +477,21 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
                 previousEvent = iohEvents[i - 1]
             
             for predWindow in ALL_PREDICTION_WINDOWS:
+                if debug:
+                    print(f"Checking event {iohEvents[i]} for pred {predWindow}")
+                iohEventStart = event[0]
                 predictiveSegmentStart = event[0] - (predWindow*60)
                 predictiveSegmentEnd = predictiveSegmentStart + 60
 
                 if (predictiveSegmentStart < 0):
                     # don't rewind before the beginning of the track
+                    if debug:
+                        print(f"Checking event {iohEvents[i]} for pred {predWindow} - exit, before beginning")
                     continue
                 elif (predictiveSegmentStart < trackStartIndex):
                     # don't rewind before the beginning of signal in track
+                    if debug:
+                        print(f"Checking event {iohEvents[i]} for pred {predWindow} - exit, before track start")
                     continue
                 elif previousEvent is not None:
                     # does this event window come before or during the previous event?
@@ -492,13 +500,15 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
                     if predictiveSegmentStart >= previousEvent[0] and predictiveSegmentStart < previousEvent[1]:
                         overlapFound = True
                     # case 2: ends during an event
-                    elif predictiveSegmentEnd >= previousEvent[0] and predictiveSegmentEnd < previousEvent[1]:
+                    elif iohEventStart >= previousEvent[0] and iohEventStart < previousEvent[1]:
                         overlapFound = True
                     # case 3: event occurs entirely inside of the window
-                    elif predictiveSegmentStart < previousEvent[0] and predictiveSegmentEnd > previousEvent[1]:
+                    elif predictiveSegmentStart < previousEvent[0] and iohEventStart > previousEvent[1]:
                         overlapFound = True
                     # do not extract a case if we overlap witha nother IOH
                     if overlapFound:
+                        if debug:
+                            print(f"Checking event {iohEvents[i]} for pred {predWindow} - exit, overlap with earlier segment")
                         continue
                 
                 # track the positive segment
@@ -522,6 +532,10 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
             negativeSegments.append((timeAtFifteen, timeAtFifteen + 60))
             negativeSegments.append((timeAtTwenty, timeAtTwenty + 60))
 
+        positiveSegmentsMap[caseid] = positiveSegments
+        negativeSegmentsMap[caseid] = negativeSegments
+        iohEventsMap[caseid] = iohEvents
+        cleanEventsMap[caseid] = cleanEvents
         saveCaseSegments(caseid, positiveSegments, negativeSegments)
 
 
@@ -530,15 +544,33 @@ def extract_segments(cases_of_interest_idx, min_before_event=3, debug=False):
     time_delta = np.round(time_end - time_start, 3)
 
     
-    return pd.DataFrame(samples, columns=['segment_abp', 'segment_ecg', 'segment_eeg', 'segment_label', 'segment_valid', 'caseidx', 'segment_key'])
+    return positiveSegmentsMap, negativeSegmentsMap, iohEventsMap, cleanEventsMap
 
 
 def areCaseSegmentsCached(caseid):
     seg_folder = f"{VITAL_EXTRACTED_SEGMENTS}/{caseid:04d}"
     return os.path.exists(seg_folder)
 
-def saveCaseSegments(caseid, positiveSegments, negativeSegments):
+def isAbpSegmentValid(vf):
+    ABP_ECG_SRATE_HZ = 500
+    ABP_TRACK_NAME = "SNUADC/ART"
+
+    samples = np.array(vf.get_track_samples(ABP_TRACK_NAME, 1/ABP_ECG_SRATE_HZ))
+    valid = True
+    if np.isnan(samples).mean() > 0.1:
+        valid = False
+    elif (samples > 200).any():
+        valid = False
+    elif (samples < 30).any():
+        valid = False
+    elif np.max(samples) - np.min(samples) < 30:
+        valid = False
+    elif (np.abs(np.diff(samples)) > 30).any():  # abrupt change -> noise
+        valid = False
     
+    return valid
+
+def saveCaseSegments(caseid, positiveSegments, negativeSegments):
     if len(positiveSegments) == 0 and len(negativeSegments) == 0:
         # exit early if no events found
         return
@@ -555,23 +587,26 @@ def saveCaseSegments(caseid, positiveSegments, negativeSegments):
 
     for i in range(0, len(positiveSegments)):
         event = positiveSegments[i]
-        seg_filename = f"{caseid:04d}_{event[0]}_{event[2]:02d}_True.track"
+        seg_filename = f"{caseid:04d}_{event[0]}_{event[2]:02d}_True.vital"
         seg_fullpath = f"{seg_folder}/{seg_filename}"
         segmentvf = copy.deepcopy(vf)
         segmentvf.crop(event[0], event[1])
-        segmentvf.to_vital(seg_fullpath)
+
+        if isAbpSegmentValid(segmentvf):
+            segmentvf.to_vital(seg_fullpath)
     
     for i in range(0, len(negativeSegments)):
         event = negativeSegments[i]
-        seg_filename = f"{caseid:04d}_{event[0]}_0_False.track"
+        seg_filename = f"{caseid:04d}_{event[0]}_0_False.vital"
         seg_fullpath = f"{seg_folder}/{seg_filename}"
         segmentvf = copy.deepcopy(vf)
         segmentvf.crop(event[0], event[1])
-        segmentvf.to_vital(seg_fullpath)  
+        if isAbpSegmentValid(segmentvf):
+            segmentvf.to_vital(seg_fullpath)
 
 
 # samples = extract_segments(cases_of_interest_idx, min_before_event=PREDICTION_WINDOW, debug=True)
 caselist = list(cases_of_interest_idx)
 random.shuffle(caselist)
 print(caselist)
-samples = extract_segments(caselist, min_before_event=PREDICTION_WINDOW, debug=False)
+samples = extract_segments(caselist, debug=False)
