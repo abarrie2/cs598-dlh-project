@@ -241,10 +241,12 @@ def get_track_data(case, print_when_file_loaded = False):
             if track_name == ABP_TRACK_NAME:
                 # no filtering for ABP
                 abp = dataset
+                abp = pd.DataFrame(abp).ffill(axis=0).bfill(axis=0)[0].values
                 if USE_MEMORY_CACHING:
                     TRACK_CACHE[cache_label] = abp
             elif track_name == ECG_TRACK_NAME:
                 ecg = dataset
+                ecg = pd.DataFrame(ecg).ffill(axis=0).bfill(axis=0)[0].values
                 # apply ECG filtering: first bandpass then do z-score normalization
                 ecg = apply_bandpass_filter(ecg, 1, 40, rate, 2)
                 ecg = apply_zscore_normalization(ecg)
@@ -252,6 +254,7 @@ def get_track_data(case, print_when_file_loaded = False):
                     TRACK_CACHE[cache_label] = ecg
             elif track_name == EEG_TRACK_NAME:
                 eeg = dataset
+                eeg = pd.DataFrame(eeg).ffill(axis=0).bfill(axis=0)[0].values
                 # apply EEG filtering: bandpass only
                 eeg = apply_bandpass_filter(eeg, 0.5, 50, rate, 2)
                 if USE_MEMORY_CACHING:
