@@ -16,6 +16,7 @@ from sklearn.neighbors import KNeighborsClassifier
 import torch
 from torch.utils.data import Dataset
 import vitaldb
+import h5py
 
 import torch.nn as nn
 import torch.nn.functional as F
@@ -288,6 +289,99 @@ if PRELOADING_CASES:
     print(f"Generated track cache, {len(TRACK_CACHE)} records generated")
 
 
+def areCaseSegmentsCached(caseid):
+    seg_folder = f"{VITAL_EXTRACTED_SEGMENTS}/{caseid:04d}"
+    return os.path.exists(seg_folder)
+
+def isAbpSegmentValid(samples, debug=False):
+    valid = True
+    if np.isnan(samples).mean() > 0.1:
+        valid = False
+        if debug:
+            print(f">10% NaN")
+    elif (samples > 200).any():
+        valid = False
+        if debug:
+            print(f"Presence of BP > 200")
+    elif (samples < 30).any():
+        valid = False
+        if debug:
+            print(f"Presence of BP < 30")
+    elif np.max(samples) - np.min(samples) < 30:
+        if debug:
+            print(f"Max - Min test < 30")
+        valid = False
+    elif (np.abs(np.diff(samples)) > 30).any():  # abrupt change -> noise
+        if debug:
+            print(f"Abrupt change (noise)")
+        valid = False
+    
+    return valid
+
+def saveCaseSegments(caseid, positiveSegments, negativeSegments, compresslevel=9, debug=False):
+
+    if len(positiveSegments) == 0 and len(negativeSegments) == 0:
+        # exit early if no events found
+        return
+
+    # event composition
+    # predictiveSegmentStart in seconds, predictiveSegmentEnd in seconds, predWindow (0 for negative), abp, ecg, eeg)
+    # 0start, 1end, 2predwindow, 3abp, 4ecg, 5eeg
+
+    seg_folder = f"{VITAL_EXTRACTED_SEGMENTS}/{caseid:04d}"
+    if not os.path.exists(seg_folder):
+        os.mkdir(seg_folder)
+    else:
+        # exit early if folder already exists, case already produced
+        return
+
+    for i in range(0, len(positiveSegments)):
+        event = positiveSegments[i]
+        startIndex = event[0]
+        endIndex = event[1]
+        predWindow = event[2]
+        abp = event[3]
+        ecg = event[4]
+        eeg = event[5]
+
+
+        seg_filename = f"{caseid:04d}_{startIndex}_{predWindow:02d}_True.h5"
+        seg_fullpath = f"{seg_folder}/{seg_filename}"
+        if isAbpSegmentValid(abp, debug):
+            f = h5py.File(seg_fullpath, "w")
+            f.create_dataset('abp', data=abp.tolist(), compression="gzip", compression_opts=compresslevel)
+            f.create_dataset('ecg', data=ecg.tolist(), compression="gzip", compression_opts=compresslevel)
+            f.create_dataset('eeg', data=eeg.tolist(), compression="gzip", compression_opts=compresslevel)
+            f.close()
+            # f.create_dataset('label', data=[1], compression="gzip", compression_opts=compresslevel)
+            # f.create_dataset('pred_window', data=[event[2]], compression="gzip", compression_opts=compresslevel)
+            # f.create_dataset('caseid', data=[caseid], compression="gzip", compression_opts=compresslevel)
+        elif debug:
+            print(f"{caseid:04d} {predWindow:02d}min {startIndex} starttime = ignored, segment validity issues")
+
+    
+    for i in range(0, len(negativeSegments)):
+        event = negativeSegments[i]
+        startIndex = event[0]
+        endIndex = event[1]
+        predWindow = event[2]
+        abp = event[3]
+        ecg = event[4]
+        eeg = event[5]
+        seg_filename = f"{caseid:04d}_{startIndex}_0_False.h5"
+        seg_fullpath = f"{seg_folder}/{seg_filename}"
+        if isAbpSegmentValid(abp, debug):
+            f = h5py.File(seg_fullpath, "w")
+            f.create_dataset('abp', data=abp.tolist(), compression="gzip", compression_opts=compresslevel)
+            f.create_dataset('ecg', data=ecg.tolist(), compression="gzip", compression_opts=compresslevel)
+            f.create_dataset('eeg', data=eeg.tolist(), compression="gzip", compression_opts=compresslevel)
+            f.close()
+            # f.create_dataset('label', data=[0], compression="gzip", compression_opts=compresslevel)
+            # f.create_dataset('pred_window', data=[0], compression="gzip", compression_opts=compresslevel)
+            # f.create_dataset('caseid', data=[caseid], compression="gzip", compression_opts=compresslevel)
+        elif debug:
+            print(f"{caseid:04d} CleanWindow {startIndex} starttime = ignored, segment validity issues")
+
 # Generate hypotensive events
 # Hypotensive events are defined as a 1-minute interval with sustained ABP of less than 65 mmHg
 # Note: Hypotensive events should be at least 20 minutes apart to minimize potential residual effects from previous events
@@ -480,8 +574,8 @@ def extract_segments(cases_of_interest_idx, debug=False):
                 if debug:
                     print(f"Checking event {iohEvents[i]} for pred {predWindow}")
                 iohEventStart = event[0]
-                predictiveSegmentStart = event[0] - (predWindow*60)
-                predictiveSegmentEnd = predictiveSegmentStart + 60
+                predictiveSegmentEnd = event[0] - (predWindow*60)
+                predictiveSegmentStart = predictiveSegmentEnd - 60
 
                 if (predictiveSegmentStart < 0):
                     # don't rewind before the beginning of the track
@@ -512,7 +606,10 @@ def extract_segments(cases_of_interest_idx, debug=False):
                         continue
                 
                 # track the positive segment
-                positiveSegments.append((predictiveSegmentStart, predictiveSegmentEnd, predWindow))
+                positiveSegments.append((predictiveSegmentStart, predictiveSegmentEnd, predWindow,
+                    abp[predictiveSegmentStart*ABP_ECG_SRATE_HZ:predictiveSegmentEnd*ABP_ECG_SRATE_HZ],
+                    ecg[predictiveSegmentStart*ABP_ECG_SRATE_HZ:predictiveSegmentEnd*ABP_ECG_SRATE_HZ],
+                    eeg[predictiveSegmentStart*EEG_SRATE_HZ:predictiveSegmentEnd*EEG_SRATE_HZ]))
 
         # FOURTH PASS
         # FOURTH PASS
@@ -528,15 +625,24 @@ def extract_segments(cases_of_interest_idx, debug=False):
             timeAtFifteen = event[0] + 900
             timeAtTwenty = event[0] + 1200
 
-            negativeSegments.append((timeAtTen, timeAtTen + 60))
-            negativeSegments.append((timeAtFifteen, timeAtFifteen + 60))
-            negativeSegments.append((timeAtTwenty, timeAtTwenty + 60))
+            negativeSegments.append((timeAtTen, timeAtTen + 60, 0,
+                                   abp[timeAtTen*ABP_ECG_SRATE_HZ:(timeAtTen + 60)*ABP_ECG_SRATE_HZ],
+                                   ecg[timeAtTen*ABP_ECG_SRATE_HZ:(timeAtTen + 60)*ABP_ECG_SRATE_HZ],
+                                   eeg[timeAtTen*EEG_SRATE_HZ:(timeAtTen + 60)*EEG_SRATE_HZ]))
+            negativeSegments.append((timeAtFifteen, timeAtFifteen + 60, 0,
+                                   abp[timeAtFifteen*ABP_ECG_SRATE_HZ:(timeAtFifteen + 60)*ABP_ECG_SRATE_HZ],
+                                   ecg[timeAtFifteen*ABP_ECG_SRATE_HZ:(timeAtFifteen + 60)*ABP_ECG_SRATE_HZ],
+                                   eeg[timeAtFifteen*EEG_SRATE_HZ:(timeAtFifteen + 60)*EEG_SRATE_HZ]))
+            negativeSegments.append((timeAtTwenty, timeAtTwenty + 60, 0,
+                                   abp[timeAtTwenty*ABP_ECG_SRATE_HZ:(timeAtTwenty + 60)*ABP_ECG_SRATE_HZ],
+                                   ecg[timeAtTwenty*ABP_ECG_SRATE_HZ:(timeAtTwenty + 60)*ABP_ECG_SRATE_HZ],
+                                   eeg[timeAtTwenty*EEG_SRATE_HZ:(timeAtTwenty + 60)*EEG_SRATE_HZ]))
 
         positiveSegmentsMap[caseid] = positiveSegments
         negativeSegmentsMap[caseid] = negativeSegments
         iohEventsMap[caseid] = iohEvents
         cleanEventsMap[caseid] = cleanEvents
-        saveCaseSegments(caseid, positiveSegments, negativeSegments)
+        saveCaseSegments(caseid, positiveSegments, negativeSegments, 9, debug)
 
 
     # total processing time
@@ -545,64 +651,6 @@ def extract_segments(cases_of_interest_idx, debug=False):
 
     
     return positiveSegmentsMap, negativeSegmentsMap, iohEventsMap, cleanEventsMap
-
-
-def areCaseSegmentsCached(caseid):
-    seg_folder = f"{VITAL_EXTRACTED_SEGMENTS}/{caseid:04d}"
-    return os.path.exists(seg_folder)
-
-def isAbpSegmentValid(vf):
-    ABP_ECG_SRATE_HZ = 500
-    ABP_TRACK_NAME = "SNUADC/ART"
-
-    samples = np.array(vf.get_track_samples(ABP_TRACK_NAME, 1/ABP_ECG_SRATE_HZ))
-    valid = True
-    if np.isnan(samples).mean() > 0.1:
-        valid = False
-    elif (samples > 200).any():
-        valid = False
-    elif (samples < 30).any():
-        valid = False
-    elif np.max(samples) - np.min(samples) < 30:
-        valid = False
-    elif (np.abs(np.diff(samples)) > 30).any():  # abrupt change -> noise
-        valid = False
-    
-    return valid
-
-def saveCaseSegments(caseid, positiveSegments, negativeSegments):
-    if len(positiveSegments) == 0 and len(negativeSegments) == 0:
-        # exit early if no events found
-        return
-
-    seg_folder = f"{VITAL_EXTRACTED_SEGMENTS}/{caseid:04d}"
-    if not os.path.exists(seg_folder):
-        os.mkdir(seg_folder)
-    else:
-        # exit early if folder already exists, case already produced
-        return
-
-    file_path = f"{MINI_FILE_FOLDER}/{caseid:04d}_mini.vital"
-    vf = vitaldb.VitalFile(file_path, TRACK_NAMES)
-
-    for i in range(0, len(positiveSegments)):
-        event = positiveSegments[i]
-        seg_filename = f"{caseid:04d}_{event[0]}_{event[2]:02d}_True.vital"
-        seg_fullpath = f"{seg_folder}/{seg_filename}"
-        segmentvf = copy.deepcopy(vf)
-        segmentvf.crop(event[0], event[1])
-
-        if isAbpSegmentValid(segmentvf):
-            segmentvf.to_vital(seg_fullpath)
-    
-    for i in range(0, len(negativeSegments)):
-        event = negativeSegments[i]
-        seg_filename = f"{caseid:04d}_{event[0]}_0_False.vital"
-        seg_fullpath = f"{seg_folder}/{seg_filename}"
-        segmentvf = copy.deepcopy(vf)
-        segmentvf.crop(event[0], event[1])
-        if isAbpSegmentValid(segmentvf):
-            segmentvf.to_vital(seg_fullpath)
 
 
 # samples = extract_segments(cases_of_interest_idx, min_before_event=PREDICTION_WINDOW, debug=True)
