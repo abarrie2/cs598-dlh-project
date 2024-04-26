@@ -1,3 +1,4 @@
+# PRIOR TO FIXING
 Missing track in vital file: 3, {'SNUADC/ART'}
 Missing track in vital file: 14, {'SNUADC/ART'}
 Missing track in vital file: 91, {'SNUADC/ART'}
@@ -187,3 +188,10 @@ Missing track in vital file: 6374, {'SNUADC/ART'}
 
 Count of cases of interest:           3296
 Count of vital files missing tracks:  186
+
+
+# AFTER FIXING
+Missing track in vital file: 489, {'SNUADC/ART'}
+
+Count of cases of interest:           3296
+Count of vital files missing tracks:  1
