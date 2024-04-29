@@ -1,0 +1,46 @@
+# 3 min
+Total Cases Present:  3084
+
+Train: P:  4834 (0.18), N: 22117 (0.82)
+Val:   P:   825 (0.18), N:  3689 (0.82)
+Test:  P:  2493 (0.17), N: 11766  (0.83)
+
+P/N Ratio: 8152:37572
+P Percent: 0.18
+N Percent: 0.82
+
+
+# 5 min
+Total Cases Present:  3075
+
+Train: P:  4312 (0.16), N: 22385 (0.84)
+Val:   P:   657 (0.15), N:  3751 (0.85)
+Test:  P:  2081 (0.15), N: 11436  (0.85)
+
+P/N Ratio: 7050:37572
+P Percent: 0.16
+N Percent: 0.84
+
+
+# 10 min
+Total Cases Present:  3036
+
+Train: P:  3197 (0.13), N: 22236 (0.87)
+Val:   P:   487 (0.11), N:  3920 (0.89)
+Test:  P:  1613 (0.12), N: 11416  (0.88)
+
+P/N Ratio: 5297:37572
+P Percent: 0.12
+N Percent: 0.88
+
+
+# 15 min
+Total Cases Present:  2987
+
+Train: P:  2469 (0.099), N: 22430 (0.9)
+Val:   P:   425 (0.1), N:  3800 (0.9)
+Test:  P:  1297 (0.1), N: 11342  (0.9)
+
+P/N Ratio: 4191:37572
+P Percent: 0.1
+N Percent: 0.9
