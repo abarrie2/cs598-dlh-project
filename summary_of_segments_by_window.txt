@@ -3,7 +3,7 @@ Train/Val/Test Summary by Cases
 Train cases:   1850, (59.99%)
 Val cases:      308, (9.99%)
 Test cases:     926, (30.03%)
-Total cases:   3084
+Total cases:   3084 --> 3084 / 14140 = 21.8%
 
 Train/Val/Test Summary by Events
 Total events:  45724 --> 45724 / 120416 = 38.0%
@@ -11,8 +11,6 @@ Train events:  26951, (58.94%)
 Val events:     4514, (9.87%)
 Test events:   14259, (31.18%)
 
-
-Total Cases Present:  3084 --> 3084 / 14140 = 21.8%
 Train: P:  4834 (0.18), N: 22117 (0.82)
 Val:   P:   825 (0.18), N:  3689 (0.82)
 Test:  P:  2493 (0.17), N: 11766  (0.83)
