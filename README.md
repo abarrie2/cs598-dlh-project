@@ -27,6 +27,17 @@ The fastest way to run a demo version of the code is in Google Colab.
 
 In the default demo mode, the notebook should take approximately 5 minutes to run on a T4 GPU instance, including 6 training epochs.
 
+### Project Final Quickstart
+
+The fastest way to run a demo version of the code is in Google Colab.
+
+1. Open the [DL4H_Team_24_Project_Final.ipnyb](https://github.com/abarrie2/cs598-dlh-project/blob/main/DL4H_Team_24_Project_Final.ipynb) notebook.
+2. Click on "Open in Colab" in the top left.
+3. Set the runtime type to "T4 GPU". The code will also run in the default "CPU" instance, but training will take ~10x longer. To do this, in the top right click on the down arrow (Additional connection options) next to "Reconnect", select "Change runtime type", select "T4 GPU" and hit "Save".
+4. In the Runtime menu, click on "Run all".
+
+In the default demo mode, the notebook should take approximately 8 minutes to run on a T4 GPU instance, including 6 training epochs.
+
 ## VitalDB Resources
 
 Open Dataset
@@ -49,3 +60,4 @@ https://github.com/vitaldb/examples
 4. Lee, HC., Park, Y., Yoon, S.B. et al. VitalDB, a high-fidelity multi-parameter vital signs database in surgical patients. Sci Data 9, 279 (2022). https://doi.org/10.1038/s41597-022-01411-5
 5. Li Q., Mark R.G. & Clifford G.D. "Artificial arterial blood pressure artifact models and an evaluation of a robust blood pressure and heart rate estimator." BioMed Eng OnLine. (2009) 8:13. pmid:19586547 https://doi.org/10.1186/1475-925X-8-13
 6. Park H-J, "VitalDB Python Example Notebooks" GitHub Repository https://github.com/vitaldb/examples/blob/master/hypotension_art.ipynb
+7. Vest A, Da Poian G, Li Q, Liu C, Nemati S, Shah A, Clifford GD, "An Open Source Benchmarked Toolbox for Cardiovascular Waveform and Interval Analysis", Physiological measurement 39, no. 10 (2018): 105004. DOI:10.5281/zenodo.1243111; 2018. 
